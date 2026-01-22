@@ -130,8 +130,9 @@ app.use(
     if (origin && corsOrigins.includes(origin)) {
       res.setHeader("Access-Control-Allow-Origin", origin);
       res.setHeader("Vary", "Origin");
+      res.setHeader("Access-Control-Allow-Credentials", "true");
     }
-    res.setHeader("Access-Control-Allow-Methods", "GET,OPTIONS");
+    res.setHeader("Access-Control-Allow-Methods", "GET,HEAD,OPTIONS");
     res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With, X-Request-Id");
     res.setHeader("Access-Control-Expose-Headers", "Accept-Ranges, Content-Range, Content-Length");
     res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");

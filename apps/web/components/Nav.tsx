@@ -113,7 +113,7 @@ export default function Nav() {
   }, [collapsed]);
 
   useEffect(() => {
-    if (!me) return;
+    if (!authed) return;
     const tick = async () => {
       try {
         const [n, inbox] = await Promise.all([
@@ -129,7 +129,7 @@ export default function Nav() {
     tick();
     const id = setInterval(tick, 20000);
     return () => clearInterval(id);
-  }, [me]);
+  }, [authed]);
 
   const items = [
     { href: "/inicio", label: "Inicio", icon: "home" as const },
@@ -139,12 +139,22 @@ export default function Nav() {
 
   const secondary = [
     { action: () => setSearchOpen(true), label: "Buscar", icon: "search" as const },
-    { action: () => setNotifsOpen((o) => !o), label: "Notificaciones", icon: "bell" as const, badge: unreadNotifs },
-    { href: "/chats", label: "Mensajes", icon: "chat" as const, badge: unreadChats },
-    { action: () => setCreateOpen(true), label: "Crear", icon: "plus" as const },
+    {
+      action: () => requireAuth(pathname, () => setNotifsOpen((o) => !o)),
+      label: "Notificaciones",
+      icon: "bell" as const,
+      badge: unreadNotifs
+    },
+    {
+      action: () => requireAuth("/chats", () => router.push("/chats")),
+      label: "Mensajes",
+      icon: "chat" as const,
+      badge: unreadChats
+    },
+    { action: () => requireAuth(pathname, () => setCreateOpen(true)), label: "Crear", icon: "plus" as const }
   ];
 
-  const profileHref = me?.user?.username ? `/perfil/${me.user.username}` : "/dashboard";
+  const profileHref = authed && me?.user?.username ? `/perfil/${me.user.username}` : `/login?next=${encodeURIComponent("/dashboard")}`;
 
   return (
     <>
@@ -153,11 +163,10 @@ export default function Nav() {
         <div className="flex items-center justify-between px-4 py-4">
           <Link href="/inicio" className="flex items-center gap-2">
             <img
-              src="/brand/isotipo.png"
+              src={collapsed ? "/brand/mark.svg" : "/brand/logo.svg"}
               alt="UZEED"
-              className="h-8 w-8 rounded-2xl border border-white/10 bg-white/10 object-cover"
+              className={`h-9 ${collapsed ? "w-9" : "w-auto"} rounded-2xl border border-white/10 bg-white/5 object-contain px-2`}
             />
-            {!collapsed ? <span className="text-sm font-semibold tracking-wide">UZEED</span> : null}
           </Link>
           <button
             type="button"
@@ -227,40 +236,75 @@ export default function Nav() {
         </nav>
 
         <div className="mt-auto p-3">
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
-            <Link href={profileHref} className="flex items-center gap-3">
-              <Avatar url={me?.user?.avatarUrl} alt={me?.user?.username || "Mi cuenta"} size={36} />
-              {!collapsed ? (
-                <div className="min-w-0">
-                  <div className="text-sm font-semibold truncate">{me?.user?.displayName || me?.user?.username || "Mi cuenta"}</div>
-                  <div className="text-xs text-white/60 truncate">@{me?.user?.username}</div>
-                </div>
-              ) : null}
-            </Link>
-            <div className="mt-2 grid gap-1">
-              <Link href="/dashboard" className="flex items-center gap-3 rounded-xl px-2 py-2 text-sm hover:bg-white/5">
-                <span className="text-white/75"><Icon name="settings" /></span>
-                {!collapsed ? <span>Configuración</span> : null}
+          {authed ? (
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
+              <Link href={profileHref} className="flex items-center gap-3">
+                <Avatar url={me?.user?.avatarUrl} alt={me?.user?.username || "Mi cuenta"} size={36} />
+                {!collapsed ? (
+                  <div className="min-w-0">
+                    <div className="text-sm font-semibold truncate">{me?.user?.displayName || me?.user?.username || "Mi cuenta"}</div>
+                    <div className="text-xs text-white/60 truncate">@{me?.user?.username}</div>
+                  </div>
+                ) : null}
               </Link>
-              <button
-                type="button"
-                onClick={async () => {
-                  try {
-                    await apiFetch("/auth/logout", { method: "POST" });
-                  } finally {
-                    router.push("/login");
-                    router.refresh();
-                  }
-                }}
-                className="flex items-center gap-3 rounded-xl px-2 py-2 text-sm text-white/80 hover:bg-white/5"
-              >
-                <span className="text-white/75">⎋</span>
-                {!collapsed ? <span>Cerrar sesión</span> : null}
-              </button>
+              <div className="mt-2 grid gap-1">
+                <Link href="/dashboard" className="flex items-center gap-3 rounded-xl px-2 py-2 text-sm hover:bg-white/5">
+                  <span className="text-white/75"><Icon name="settings" /></span>
+                  {!collapsed ? <span>Mi cuenta</span> : null}
+                </Link>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      await apiFetch("/auth/logout", { method: "POST" });
+                    } finally {
+                      router.push("/login");
+                      router.refresh();
+                    }
+                  }}
+                  className="flex items-center gap-3 rounded-xl px-2 py-2 text-sm text-white/80 hover:bg-white/5"
+                >
+                  <span className="text-white/75">⎋</span>
+                  {!collapsed ? <span>Cerrar sesión</span> : null}
+                </button>
+              </div>
             </div>
-          </div>
-        </div>
+          ) : (
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
+              {!collapsed ? (
+                <>
+                  <div className="text-sm font-semibold">Inicia sesión</div>
+                  <div className="mt-1 text-xs text-white/60">Para publicar, mensajes y notificaciones.</div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button type="button" className="btn-primary" onClick={() => goLogin(pathname)}>Ingresar</button>
+                    <Link href={`/register?next=${encodeURIComponent(pathname || "/inicio")}`} className="btn-secondary">Crear cuenta</Link>
+                  </div>
+                </>
+              ) : (
+                <button type="button" className="flex w-full items-center justify-center rounded-xl bg-white/10 p-2" onClick={() => goLogin(pathname)} aria-label="Iniciar sesión">
+                  <span className="text-white/80"><Icon name="chat" /></span>
+                </button>
+              )}
+            </div>
+          )}
+        </div></div>
       </aside>
+
+      
+      {/* Mobile notifications (floating, keeps bottom nav clean) */}
+      <button
+        type="button"
+        onClick={() => requireAuth(pathname, () => setNotifsOpen(true))}
+        className="md:hidden fixed z-50 right-4 rounded-full border border-white/10 bg-black/60 backdrop-blur px-3 py-2"
+        style={{ top: "calc(env(safe-area-inset-top) + 12px)" }}
+        aria-label="Notificaciones"
+        data-testid="mobile-notifs-fab"
+      >
+        <div className="relative">
+          <Icon name="bell" />
+          {unreadNotifs ? <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-fuchsia-500" /> : null}
+        </div>
+      </button>
 
       {/* Mobile bottom nav */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-white/10 bg-black/70 backdrop-blur">
@@ -271,12 +315,12 @@ export default function Nav() {
           <Link className="flex flex-col items-center justify-center gap-1 py-1 text-xs" href="/reels">
             <Icon name="reels" />
           </Link>
-          <button onClick={() => setCreateOpen(true)} className="flex flex-col items-center justify-center gap-1 py-1 text-xs">
+          <button onClick={() => requireAuth(pathname, () => setCreateOpen(true))} className="flex flex-col items-center justify-center gap-1 py-1 text-xs">
             <Icon name="plus" />
           </button>
-          <button onClick={() => setNotifsOpen(true)} className="relative flex flex-col items-center justify-center gap-1 py-1 text-xs">
-            <Icon name="bell" />
-            {unreadNotifs ? <span className="absolute right-4 top-1 h-2 w-2 rounded-full bg-fuchsia-500" /> : null}
+          <button onClick={() => requireAuth("/chats", () => router.push("/chats"))} className="relative flex flex-col items-center justify-center gap-1 py-1 text-xs" aria-label="Mensajes">
+            <Icon name="chat" />
+            {unreadChats ? <span className="absolute right-4 top-1 h-2 w-2 rounded-full bg-fuchsia-500" /> : null}
           </button>
           <Link className="relative flex flex-col items-center justify-center gap-1 py-1 text-xs" href={profileHref} aria-label="Perfil">
             <Avatar url={me?.user?.avatarUrl} alt="Perfil" size={24} />

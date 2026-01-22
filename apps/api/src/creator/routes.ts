@@ -41,11 +41,9 @@ const upload = multer({
   fileFilter: mediaFilter
 });
 
-async function ensureCreator(userId: string) {
-  const user = await prisma.user.findUnique({ where: { id: userId }, select: { profileType: true } });
-  // Posting in Inicio/Reels is allowed for any authenticated user.
-  // Role-specific constraints (if any) should be enforced in the UI or in specific business routes.
-  return Boolean(user);
+async function ensureUser(userId: string) {
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true } });
+  return user;
 }
 
 async function listMyPosts(userId: string) {
@@ -67,8 +65,8 @@ creatorRouter.get("/creator/posts", asyncHandler(async (req, res) => {
 }));
 
 creatorRouter.post("/posts/mine", upload.array("files", 10), asyncHandler(async (req, res) => {
-  const ok = await ensureCreator(req.session.userId!);
-  if (!ok) return res.status(403).json({ error: "FORBIDDEN" });
+  const user = await ensureUser(req.session.userId!);
+  if (!user) return res.status(401).json({ error: "UNAUTHENTICATED" });
 
   const { title, body, isPublic, price } = req.body as Record<string, string>;
   const payload = {
@@ -124,8 +122,8 @@ creatorRouter.post("/posts/mine", upload.array("files", 10), asyncHandler(async 
 }));
 
 creatorRouter.post("/creator/posts", upload.array("files", 10), asyncHandler(async (req, res) => {
-  const ok = await ensureCreator(req.session.userId!);
-  if (!ok) return res.status(403).json({ error: "FORBIDDEN" });
+  const user = await ensureUser(req.session.userId!);
+  if (!user) return res.status(401).json({ error: "UNAUTHENTICATED" });
 
   const { title, body, isPublic, price } = req.body as Record<string, string>;
   const payload = {
@@ -181,8 +179,8 @@ creatorRouter.post("/creator/posts", upload.array("files", 10), asyncHandler(asy
 }));
 
 creatorRouter.put("/posts/mine/:id", asyncHandler(async (req, res) => {
-  const ok = await ensureCreator(req.session.userId!);
-  if (!ok) return res.status(403).json({ error: "FORBIDDEN" });
+  const user = await ensureUser(req.session.userId!);
+  if (!user) return res.status(401).json({ error: "UNAUTHENTICATED" });
 
   const parsed = CreatePostSchema.partial().safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: "VALIDATION", details: parsed.error.flatten() });
@@ -197,8 +195,8 @@ creatorRouter.put("/posts/mine/:id", asyncHandler(async (req, res) => {
 }));
 
 creatorRouter.put("/creator/posts/:id", asyncHandler(async (req, res) => {
-  const ok = await ensureCreator(req.session.userId!);
-  if (!ok) return res.status(403).json({ error: "FORBIDDEN" });
+  const user = await ensureUser(req.session.userId!);
+  if (!user) return res.status(401).json({ error: "UNAUTHENTICATED" });
 
   const parsed = CreatePostSchema.partial().safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: "VALIDATION", details: parsed.error.flatten() });
@@ -213,8 +211,8 @@ creatorRouter.put("/creator/posts/:id", asyncHandler(async (req, res) => {
 }));
 
 creatorRouter.delete("/posts/mine/:id", asyncHandler(async (req, res) => {
-  const ok = await ensureCreator(req.session.userId!);
-  if (!ok) return res.status(403).json({ error: "FORBIDDEN" });
+  const user = await ensureUser(req.session.userId!);
+  if (!user) return res.status(401).json({ error: "UNAUTHENTICATED" });
 
   const post = await prisma.post.findUnique({ where: { id: req.params.id } });
   if (!post || post.authorId !== req.session.userId!) return res.status(404).json({ error: "NOT_FOUND" });
@@ -223,8 +221,8 @@ creatorRouter.delete("/posts/mine/:id", asyncHandler(async (req, res) => {
 }));
 
 creatorRouter.delete("/creator/posts/:id", asyncHandler(async (req, res) => {
-  const ok = await ensureCreator(req.session.userId!);
-  if (!ok) return res.status(403).json({ error: "FORBIDDEN" });
+  const user = await ensureUser(req.session.userId!);
+  if (!user) return res.status(401).json({ error: "UNAUTHENTICATED" });
 
   const post = await prisma.post.findUnique({ where: { id: req.params.id } });
   if (!post || post.authorId !== req.session.userId!) return res.status(404).json({ error: "NOT_FOUND" });

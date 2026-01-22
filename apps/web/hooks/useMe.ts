@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { apiFetch } from "../lib/api";
 
-type MeUser = {
+export type MeUser = {
   id: string;
   username: string;
   displayName: string | null;
@@ -11,16 +11,20 @@ type MeUser = {
   profileType: string | null;
 };
 
+type MeResponse = { user: MeUser | null };
+
 export default function useMe() {
-  const [me, setMe] = useState<{ user: MeUser } | null>(null);
+  const [me, setMe] = useState<MeResponse | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let alive = true;
-    apiFetch<{ user: MeUser }>("/auth/me")
+    apiFetch<MeResponse>("/auth/me")
       .then((r) => {
         if (!alive) return;
-        setMe(r);
+        // If unauthenticated, backend returns { user: null } (200). Normalize to null so
+        // the rest of the app can gate requests and avoid 401 spam.
+        setMe(r.user ? r : null);
       })
       .catch(() => {
         if (!alive) return;
