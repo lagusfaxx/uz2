@@ -68,7 +68,7 @@ function ReelSlide({
   return (
     <div
       ref={containerRef}
-      className="relative h-[calc(100vh-84px)] w-full snap-start overflow-hidden rounded-3xl border border-white/10 bg-black"
+      className="relative h-[calc(100svh-140px)] md:h-[calc(100vh-84px)] w-full snap-start overflow-hidden rounded-3xl border border-white/10 bg-black"
     >
       {src && !broken ? (
         <video
@@ -97,7 +97,7 @@ function ReelSlide({
 
       <div className="absolute left-5 bottom-5 right-20">
         <Link href={`/perfil/${post.author.username}`} className="inline-flex items-center gap-3 hover:opacity-95">
-          <Avatar url={post.author.avatarUrl} alt={post.author.username} size={40} ringClassName="border-white/20" />
+          <Avatar url={post.author.avatarUrl} alt={post.author.username} size={40} />
           <div>
             <div className="text-sm font-semibold text-white">{post.author.displayName || post.author.username}</div>
             <div className="text-xs text-white/70">@{post.author.username}</div>

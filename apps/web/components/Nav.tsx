@@ -18,7 +18,6 @@ type Notification = {
   href?: string | null;
 };
 
-
 type IconName =
   | "home"
   | "reels"
@@ -129,6 +128,12 @@ function Icon({ name }: { name: IconName }) {
           <path fill="currentColor" d="M4 6h16v2H4V6Zm0 5h16v2H4v-2Zm0 5h16v2H4v-2Z" />
         </svg>
       );
+    case "close":
+      return (
+        <svg viewBox="0 0 24 24" aria-hidden="true" className="h-6 w-6">
+          <path fill="currentColor" d="M18.3 5.7 12 12l6.3 6.3-1.4 1.4L10.6 13.4 4.3 19.7 2.9 18.3 9.2 12 2.9 5.7 4.3 4.3l6.3 6.3 6.3-6.3 1.4 1.4Z" />
+        </svg>
+      );
     default:
       return null;
   }
@@ -154,6 +159,7 @@ export default function Nav() {
 
   const [collapsed, setCollapsed] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
 
   const [unreadNotifs, setUnreadNotifs] = useState<number>(0);
@@ -372,57 +378,215 @@ export default function Nav() {
         </div>
       </aside>
 
+      {/* Mobile top bar + drawer */}
+      <div className="md:hidden fixed top-0 left-0 right-0 z-40 border-b border-white/10 bg-black/60 backdrop-blur supports-[backdrop-filter]:bg-black/40">
+        <div className="flex items-center justify-between px-3 py-2" style={{ paddingTop: "env(safe-area-inset-top)" }}>
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen(true)}
+            className="rounded-xl border border-white/10 bg-white/5 p-2 text-white/90"
+            aria-label="Menú"
+          >
+            <Icon name="menu" />
+          </button>
+
+          <Link href="/inicio" className="flex items-center gap-2">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/brand/logo-icon.png" alt="UZEED" className="h-7 w-7" />
+            <span className="text-sm font-semibold tracking-wide text-white">UZEED</span>
+          </Link>
+
+          <div className="w-10" />
+        </div>
+      </div>
+
+      {mobileMenuOpen && (
+        <div className="md:hidden fixed inset-0 z-50">
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen(false)}
+            className="absolute inset-0 bg-black/60"
+            aria-label="Cerrar"
+          />
+          <div
+            className="absolute left-0 top-0 h-full w-[86%] max-w-[340px] border-r border-white/10 bg-black/90 backdrop-blur"
+            style={{ paddingTop: "env(safe-area-inset-top)" }}
+          >
+            <div className="flex items-center justify-between px-4 py-3">
+              <div className="flex items-center gap-2">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/brand/logo-icon.png" alt="UZEED" className="h-8 w-8" />
+                <span className="text-base font-semibold text-white">UZEED</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setMobileMenuOpen(false)}
+                className="rounded-xl border border-white/10 bg-white/5 p-2 text-white/90"
+                aria-label="Cerrar"
+              >
+                <Icon name="close" />
+              </button>
+            </div>
+
+            <nav className="px-3">
+              {[...primary, ...secondary].map((item) => {
+                const content = (
+                  <span className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm text-white/90 transition hover:bg-white/5">
+                    <Icon name={item.icon} />
+                    <span className="truncate">{item.label}</span>
+                  </span>
+                );
+
+                // Guardar rutas privadas
+                const isPrivate =
+                  item.href === "/mensajes" ||
+                  item.href === "/notificaciones" ||
+                  item.href === profileHref;
+
+                if (isPrivate) {
+                  return (
+                    <button
+                      key={item.label}
+                      type="button"
+                      onClick={() =>
+                        requireAuth(item.href, () => {
+                          setMobileMenuOpen(false);
+                          router.push(item.href);
+                        })
+                      }
+                      className="block w-full text-left"
+                    >
+                      {content}
+                    </button>
+                  );
+                }
+
+                return (
+                  <Link
+                    key={item.label}
+                    href={item.href}
+                    className="block"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    {content}
+                  </Link>
+                );
+              })}
+            </nav>
+
+            <div className="mt-4 px-3">
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
+                <div className="flex items-center gap-3">
+                  <Avatar imageUrl={me?.user?.avatarUrl || null} username={me?.user?.username || "Invitado"} size="md" />
+                  <div className="min-w-0">
+                    <div className="truncate text-sm font-semibold text-white">
+                      {loading ? "Cargando…" : authed ? me?.user?.displayName || me?.user?.username : "Invitado"}
+                    </div>
+                    <div className="truncate text-xs text-white/60">
+                      {authed ? `@${me?.user?.username}` : "Inicia sesión para continuar"}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-3 flex flex-col gap-1">
+                  {accountItems.map((it) => {
+                    const row = (
+                      <span className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm text-white/80 transition hover:bg-white/5 hover:text-white">
+                        <Icon name={it.icon} />
+                        <span className="truncate">{it.label}</span>
+                      </span>
+                    );
+
+                    if (it.href.startsWith("/logout")) {
+                      return (
+                        <a key={it.label} href={it.href} className="block" onClick={() => setMobileMenuOpen(false)}>
+                          {row}
+                        </a>
+                      );
+                    }
+
+                    // /mi-cuenta y /configuracion deberían requerir auth
+                    const priv = it.href !== "/logout" && it.href !== "/login" && it.href !== "/register";
+                    if (priv) {
+                      return (
+                        <button
+                          key={it.label}
+                          type="button"
+                          onClick={() =>
+                            requireAuth(it.href, () => {
+                              setMobileMenuOpen(false);
+                              router.push(it.href);
+                            })
+                          }
+                          className="block w-full text-left"
+                        >
+                          {row}
+                        </button>
+                      );
+                    }
+
+                    return (
+                      <Link key={it.label} href={it.href} className="block" onClick={() => setMobileMenuOpen(false)}>
+                        {row}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+
       {/* Mobile bottom nav */}
       <div
-        className="md:hidden fixed left-0 right-0 z-40 border-t border-white/10 bg-black/60 backdrop-blur supports-[backdrop-filter]:bg-black/40"
+        className="md:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-white/10 bg-black/70 backdrop-blur supports-[backdrop-filter]:bg-black/40"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
-        <div className="flex items-center justify-around px-3 py-2">
-          <Link href="/inicio" className="relative rounded-xl p-2 text-white/90" aria-label="Inicio">
+        <div className="grid grid-cols-5 items-center px-2 py-2">
+          <Link href="/inicio" className="mx-auto rounded-xl p-2 text-white/90" aria-label="Inicio">
             <Icon name="home" />
           </Link>
 
-          <Link href="/reels" className="relative rounded-xl p-2 text-white/90" aria-label="Reels">
+          <Link href="/reels" className="mx-auto rounded-xl p-2 text-white/90" aria-label="Reels">
             <Icon name="reels" />
           </Link>
 
           <button
             type="button"
             onClick={() => requireAuth(pathname || "/inicio", () => setCreateOpen(true))}
-            className="relative rounded-2xl border border-white/10 bg-white/5 p-2 text-white/95"
+            className="mx-auto rounded-2xl border border-white/10 bg-white/5 p-2 text-white/95 active:scale-[0.98]"
             aria-label="Crear"
-            style={{ transform: "translateY(-10px)" }}
+            style={{ transform: "translateY(-6px)" }}
           >
             <Icon name="create" />
           </button>
 
           <button
             type="button"
-            onClick={() => requireAuth("/notificaciones", () => router.push("/notificaciones"))}
-            className="relative rounded-xl p-2 text-white/90"
-            aria-label="Notificaciones"
-          >
-            <Icon name="notifs" />
-            <Badge value={unreadNotifs} />
-          </button>
-
-          <button
-            type="button"
             onClick={() => requireAuth("/mensajes", () => router.push("/mensajes"))}
-            className="relative rounded-xl p-2 text-white/90"
+            className="mx-auto relative rounded-xl p-2 text-white/90"
             aria-label="Mensajes"
           >
             <Icon name="messages" />
             <Badge value={unreadMessages} />
           </button>
 
-          <Link href={profileHref} className="relative rounded-xl p-2" aria-label="Perfil">
-            {authed ? (
-              <Avatar imageUrl={me?.user?.avatarUrl || null} alt={me?.user?.username || "Perfil"} size="sm" />
-            ) : (
+          {authed ? (
+            <Link href={profileHref} className="mx-auto relative rounded-xl p-2" aria-label="Perfil">
+              <Avatar imageUrl={me?.user?.avatarUrl || null} username={me?.user?.username || "Perfil"} size="sm" />
+            </Link>
+          ) : (
+            <button
+              type="button"
+              onClick={() => router.push(`/login?next=${encodeURIComponent(profileHref)}`)}
+              className="mx-auto relative rounded-xl p-2 text-white/90"
+              aria-label="Perfil"
+            >
               <Icon name="profile" />
-            )}
-          </Link>
+            </button>
+          )}
         </div>
       </div>
 

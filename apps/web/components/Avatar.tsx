@@ -1,63 +1,86 @@
-"use client";
+'use client';
 
-import { useMemo, useState } from "react";
-import { resolveMediaUrl } from "../lib/api";
+import { cn } from '@/lib/cn';
+import { resolveMediaUrl } from '@/lib/api';
+import { User } from 'lucide-react';
+import { useMemo, useState } from 'react';
 
-type AvatarProps = {
-  url?: string | null;
-  alt?: string;
-  size?: number; // px
-  className?: string;
-  ringClassName?: string;
-};
+type SizePreset = 'sm' | 'md' | 'lg';
 
-function IncognitoIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      aria-hidden="true"
-    >
-      <path d="M3 10.5h18" />
-      <path d="M7 10.5V7.8c0-.9.7-1.6 1.6-1.6h6.8c.9 0 1.6.7 1.6 1.6v2.7" />
-      <path d="M7.5 14.2c.9-1.3 2.5-2.2 4.5-2.2s3.6.9 4.5 2.2" />
-      <path d="M9 15.8c.8.8 1.9 1.2 3 1.2s2.2-.4 3-1.2" />
-      <path d="M8.2 10.5 5.2 4.5M15.8 10.5l3-6" />
-    </svg>
-  );
+type Props =
+  | {
+      url?: string | null;
+      alt?: string;
+      size?: number;
+      className?: string;
+    }
+  | {
+      imageUrl?: string | null;
+      username?: string;
+      size?: SizePreset;
+      className?: string;
+    };
+
+function sizeToPx(size?: SizePreset): number {
+  if (size === 'sm') return 28;
+  if (size === 'lg') return 52;
+  return 40; // md default
 }
 
-export default function Avatar({ url, alt, size = 40, className = "", ringClassName = "" }: AvatarProps) {
-  const [broken, setBroken] = useState(false);
+export default function Avatar(props: Props) {
+  // Support both prop styles (legacy + new)
+  const url = 'url' in props ? props.url : props.imageUrl;
+  const alt =
+    'alt' in props
+      ? props.alt || 'Avatar'
+      : props.username
+        ? `Avatar de ${props.username}`
+        : 'Avatar';
+
+  const px =
+    'size' in props && typeof props.size === 'number'
+      ? props.size
+      : 'size' in props && typeof props.size === 'string'
+        ? sizeToPx(props.size as SizePreset)
+        : 40;
+
+  const className = props.className;
+
+  const [failed, setFailed] = useState(false);
 
   const src = useMemo(() => {
-    const resolved = resolveMediaUrl(url);
-    return resolved || null;
+    if (!url) return null;
+    try {
+      const resolved = resolveMediaUrl(url);
+      if (!resolved || resolved === 'undefined' || resolved === 'null') return null;
+      return resolved;
+    } catch {
+      return null;
+    }
   }, [url]);
 
-  const showFallback = !src || broken;
-  const dim = { width: size, height: size };
+  const showImg = !!src && !failed;
 
   return (
     <div
-      className={`shrink-0 overflow-hidden rounded-full border border-white/10 bg-white/10 ${ringClassName} ${className}`}
-      style={dim}
-      aria-label={alt || "avatar"}
+      className={cn(
+        'relative inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/10 ring-1 ring-white/10',
+        className,
+      )}
+      style={{ width: px, height: px }}
+      aria-label={alt}
     >
-      {showFallback ? (
-        <div className="flex h-full w-full items-center justify-center text-white/70">
-          <IncognitoIcon className="h-5 w-5" />
-        </div>
-      ) : (
+      {showImg ? (
+        // eslint-disable-next-line @next/next/no-img-element
         <img
-          src={src}
-          alt={alt || "avatar"}
+          src={src!}
+          alt={alt}
           className="h-full w-full object-cover"
-          onError={() => setBroken(true)}
+          referrerPolicy="no-referrer"
+          onError={() => setFailed(true)}
         />
+      ) : (
+        <User className="h-1/2 w-1/2 text-white/60" aria-hidden="true" />
       )}
     </div>
   );
