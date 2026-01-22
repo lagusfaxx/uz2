@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { apiFetch, resolveMediaUrl } from "../../lib/api";
+import Avatar from "../../components/Avatar";
 
 type ServiceProfile = {
   id: string;
@@ -133,15 +134,7 @@ export default function ServicesPage() {
         {profiles.map((p) => (
           <div key={p.id} className="card p-5">
             <div className="flex items-center gap-3">
-              <div className="h-12 w-12 rounded-full bg-white/10 border border-white/10 overflow-hidden">
-                {p.avatarUrl ? (
-                  <img
-                    src={resolveMediaUrl(p.avatarUrl) || ""}
-                    alt={p.username}
-                    className="h-full w-full object-cover"
-                  />
-                ) : null}
-              </div>
+              <Avatar url={p.avatarUrl} alt={p.username} size={48} />
               <div>
                 <div className="font-semibold">{p.displayName || p.username}</div>
                 <div className="text-xs text-white/50">@{p.username}</div>

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { apiFetch, API_URL } from "../../../lib/api";
+import Avatar from "../../../components/Avatar";
 
 type ProfilePost = {
   id: string;
@@ -168,9 +169,7 @@ export default function ProfilePage() {
         <div className="p-6 md:p-8">
           <div className="-mt-16 flex flex-wrap items-end justify-between gap-4">
             <div className="flex items-end gap-4">
-              <div className="h-24 w-24 rounded-full border border-white/10 bg-white/10 overflow-hidden">
-                {avatarUrl ? <img src={avatarUrl} alt={profile.username} className="h-full w-full object-cover" /> : null}
-              </div>
+              <Avatar url={profile.avatarUrl} alt={profile.username} size={96} />
               <div>
                 <div className="flex flex-wrap items-center gap-2">
                   <h1 className="text-2xl font-semibold">{profile.displayName || profile.username}</h1>

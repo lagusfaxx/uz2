@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { apiFetch, API_URL } from "../../lib/api";
+import Avatar from "../../components/Avatar";
 
 type MeResponse = {
   user: {
@@ -333,14 +334,8 @@ export default function DashboardPage() {
         <div className="p-6 md:p-8">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="flex items-center gap-4">
-              <div className="h-20 w-20 rounded-full border border-white/10 bg-white/10 overflow-hidden -mt-16">
-                {avatarUrl ? (
-                  <img
-                    src={avatarUrl.startsWith("http") ? avatarUrl : `${API_URL}${avatarUrl}`}
-                    alt={me.username}
-                    className="h-full w-full object-cover"
-                  />
-                ) : null}
+              <div className="-mt-16">
+                <Avatar url={me.avatarUrl} alt={me.username} size={80} />
               </div>
               <div>
                 <h1 className="text-2xl font-semibold">Mi cuenta</h1>

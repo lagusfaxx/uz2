@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { API_URL } from "../lib/api";
+import AuthGate from "./AuthGate";
 
 type CreatePostModalProps = {
   isOpen: boolean;
@@ -22,6 +23,8 @@ export default function CreatePostModal({ isOpen, onClose, onCreated, defaultMod
   const [files, setFiles] = useState<FileList | null>(null);
   const [previews, setPreviews] = useState<PreviewItem[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [unauth, setUnauth] = useState(false);
+  const [forbidden, setForbidden] = useState(false);
   const [progress, setProgress] = useState(0);
   const [uploading, setUploading] = useState(false);
 
@@ -34,6 +37,8 @@ export default function CreatePostModal({ isOpen, onClose, onCreated, defaultMod
     setFiles(null);
     setPreviews([]);
     setError(null);
+    setUnauth(false);
+    setForbidden(false);
     setProgress(0);
     setUploading(false);
   }, [isOpen, defaultMode]);
@@ -75,6 +80,8 @@ export default function CreatePostModal({ isOpen, onClose, onCreated, defaultMod
       return;
     }
     setError(null);
+    setUnauth(false);
+    setForbidden(false);
     setUploading(true);
 
     const form = new FormData();
@@ -99,12 +106,20 @@ export default function CreatePostModal({ isOpen, onClose, onCreated, defaultMod
         onCreated?.();
         onClose();
       } else {
-        setError(`No se pudo crear la publicación (${xhr.status}).`);
+        if (xhr.status === 401) {
+          setUnauth(true);
+          setError(null);
+        } else if (xhr.status === 403) {
+          setForbidden(true);
+          setError(null);
+        } else {
+          setError("No se pudo crear la publicación. Intenta nuevamente.");
+        }
         setUploading(false);
       }
     };
     xhr.onerror = () => {
-      setError("No se pudo subir el contenido.");
+      setError("No se pudo conectar con el servidor. Revisa tu conexión y reintenta.");
       setUploading(false);
     };
     xhr.send(form);
@@ -141,6 +156,14 @@ export default function CreatePostModal({ isOpen, onClose, onCreated, defaultMod
           ))}
         </div>
 
+        {unauth ? (
+          <AuthGate className="mt-4" />
+        ) : forbidden ? (
+          <div className="mt-4 card p-6 border border-white/10 bg-white/5">
+            <div className="text-lg font-semibold">No tienes permisos para publicar</div>
+            <div className="mt-1 text-sm text-white/70">Tu tipo de cuenta no puede crear publicaciones por el momento.</div>
+          </div>
+        ) : (
         <form onSubmit={submit} className="mt-4 grid gap-4">
           <div className="grid gap-2">
             <label className="text-sm text-white/70">Título</label>
@@ -193,6 +216,7 @@ export default function CreatePostModal({ isOpen, onClose, onCreated, defaultMod
             {uploading ? `Subiendo ${progress}%` : "Publicar"}
           </button>
         </form>
+        )}
       </div>
     </div>
   );

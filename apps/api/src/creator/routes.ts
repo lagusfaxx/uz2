@@ -43,10 +43,9 @@ const upload = multer({
 
 async function ensureCreator(userId: string) {
   const user = await prisma.user.findUnique({ where: { id: userId }, select: { profileType: true } });
-  if (!user || !["CREATOR", "PROFESSIONAL"].includes(user.profileType)) {
-    return false;
-  }
-  return true;
+  // Posting in Inicio/Reels is allowed for any authenticated user.
+  // Role-specific constraints (if any) should be enforced in the UI or in specific business routes.
+  return Boolean(user);
 }
 
 async function listMyPosts(userId: string) {

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { apiFetch, API_URL, resolveMediaUrl } from "../../../lib/api";
+import Avatar from "../../../components/Avatar";
 
 type Message = {
   id: string;
@@ -102,15 +103,7 @@ export default function ChatPage() {
     <div className="grid gap-6">
       <div className="card p-6">
         <div className="flex items-center gap-4">
-          <div className="h-12 w-12 rounded-full bg-white/10 border border-white/10 overflow-hidden">
-            {other?.avatarUrl ? (
-              <img
-                src={resolveMediaUrl(other.avatarUrl) || ""}
-                alt={other.username}
-                className="h-full w-full object-cover"
-              />
-            ) : null}
-          </div>
+          <Avatar url={other?.avatarUrl} alt={other?.username || "Chat"} size={48} />
           <div>
             <h1 className="text-lg font-semibold">{other?.displayName || other?.username || "Chat"}</h1>
             {other ? (

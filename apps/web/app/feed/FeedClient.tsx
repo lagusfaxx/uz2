@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { apiFetch, resolveMediaUrl } from "../../lib/api";
+import { apiFetch } from "../../lib/api";
 import { MediaPreview } from "../../components/Media";
 import CreatePostModal from "../../components/CreatePostModal";
 import FloatingCreateButton from "../../components/FloatingCreateButton";
+import Avatar from "../../components/Avatar";
 
 type FeedPost = {
   id: string;
@@ -117,7 +118,7 @@ export default function FeedClient() {
       <div className="grid gap-6 max-w-[630px] mx-auto w-full">
         {posts.map((post) => {
           const preview = post.preview ? { url: post.preview.url, type: post.preview.type } : null;
-          const avatar = resolveMediaUrl(post.author.avatarUrl);
+          const profileHref = `/perfil/${post.author.username}`;
           const typeLabel =
             post.author.profileType === "CREATOR"
               ? "Creadora"
@@ -130,18 +131,18 @@ export default function FeedClient() {
           return (
             <article key={post.id} className="card p-6">
               <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 rounded-full bg-white/10 border border-white/10 overflow-hidden">
-                    {avatar ? <img src={avatar} alt={post.author.username} className="h-full w-full object-cover" /> : null}
-                  </div>
+                <Link href={profileHref} className="flex items-center gap-3 hover:opacity-95">
+                  <Avatar url={post.author.avatarUrl} alt={post.author.username} size={48} />
                   <div>
                     <div className="font-semibold">{post.author.displayName || post.author.username}</div>
                     <div className="text-xs text-white/50">
                       {typeLabel} • {new Date(post.createdAt).toLocaleString("es-CL")}
                     </div>
                   </div>
-                </div>
-                <div className="text-xs text-white/40">@{post.author.username}</div>
+                </Link>
+                <Link href={profileHref} className="text-xs text-white/40 hover:text-white/60" aria-label="Abrir perfil">
+                  @{post.author.username}
+                </Link>
               </div>
               <div className="mt-4 text-sm text-white/80">{post.body}</div>
               <div className="mt-4">

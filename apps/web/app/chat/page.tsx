@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { apiFetch, resolveMediaUrl } from "../../lib/api";
+import { apiFetch } from "../../lib/api";
+import Avatar from "../../components/Avatar";
 
 type Conversation = {
   other: {
@@ -62,7 +63,6 @@ export default function ChatInboxPage() {
         </div>
         <div className="grid gap-3">
           {filtered.map((c) => {
-            const avatar = resolveMediaUrl(c.other.avatarUrl);
             return (
               <Link
                 key={c.other.id}
@@ -70,9 +70,7 @@ export default function ChatInboxPage() {
                 className="flex items-center justify-between gap-4 rounded-xl border border-white/10 bg-white/5 p-4 hover:border-white/30 transition"
               >
                 <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 rounded-full bg-white/10 border border-white/10 overflow-hidden">
-                    {avatar ? <img src={avatar} alt={c.other.username} className="h-full w-full object-cover" /> : null}
-                  </div>
+                  <Avatar url={c.other.avatarUrl} alt={c.other.username} size={48} />
                   <div>
                     <div className="font-semibold">{c.other.displayName || c.other.username}</div>
                     <div className="text-xs text-white/50">@{c.other.username}</div>

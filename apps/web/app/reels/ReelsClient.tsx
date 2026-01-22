@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { apiFetch, resolveMediaUrl } from "../../lib/api";
 import CreatePostModal from "../../components/CreatePostModal";
+import Avatar from "../../components/Avatar";
 
 type ReelPost = {
   id: string;
@@ -35,6 +36,7 @@ function ReelSlide({
 }) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const [broken, setBroken] = useState(false);
   const src = useMemo(() => {
     const direct = post.media?.[0]?.url || post.preview?.url || null;
     return resolveMediaUrl(direct);
@@ -68,19 +70,25 @@ function ReelSlide({
       ref={containerRef}
       className="relative h-[calc(100vh-84px)] w-full snap-start overflow-hidden rounded-3xl border border-white/10 bg-black"
     >
-      {src ? (
+      {src && !broken ? (
         <video
           ref={videoRef}
           src={src}
           className={`h-full w-full object-cover ${post.paywalled ? "blur-lg scale-105" : ""}`}
+          autoPlay
           muted={muted}
           playsInline
           loop
           preload="metadata"
+          controls={false}
+          onError={() => setBroken(true)}
         />
       ) : (
         <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-white/10 to-transparent">
-          <div className="text-sm text-white/70">No se pudo cargar el reel</div>
+          <div className="text-center">
+            <div className="text-sm font-semibold text-white">Contenido no disponible</div>
+            <div className="mt-1 text-xs text-white/60">Vuelve a intentar en unos segundos.</div>
+          </div>
         </div>
       )}
 
@@ -88,16 +96,8 @@ function ReelSlide({
       <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
 
       <div className="absolute left-5 bottom-5 right-20">
-        <Link href={`/perfil/${post.author.username}`} className="inline-flex items-center gap-3">
-          <div className="h-10 w-10 overflow-hidden rounded-full border border-white/20 bg-white/10">
-            {post.author.avatarUrl ? (
-              <img
-                src={resolveMediaUrl(post.author.avatarUrl) || ""}
-                alt={post.author.username}
-                className="h-full w-full object-cover"
-              />
-            ) : null}
-          </div>
+        <Link href={`/perfil/${post.author.username}`} className="inline-flex items-center gap-3 hover:opacity-95">
+          <Avatar url={post.author.avatarUrl} alt={post.author.username} size={40} ringClassName="border-white/20" />
           <div>
             <div className="text-sm font-semibold text-white">{post.author.displayName || post.author.username}</div>
             <div className="text-xs text-white/70">@{post.author.username}</div>
