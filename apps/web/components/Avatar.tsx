@@ -1,5 +1,4 @@
 'use client';
-
 import Image from 'next/image';
 import { User } from 'lucide-react';
 import { cn } from '@/lib/cn';
@@ -10,7 +9,6 @@ type Props = {
   url?: string | null;
   /** Legacy (para compatibilidad) */
   imageUrl?: string | null;
-
   alt?: string;
   size?: number;
   className?: string;
@@ -19,7 +17,6 @@ type Props = {
 export default function Avatar({ url, imageUrl, alt, size = 36, className }: Props) {
   const raw = url ?? imageUrl ?? null;
   const src = raw ? resolveMediaUrl(raw) : null;
-
   const px = Math.max(18, size);
 
   return (
@@ -42,7 +39,7 @@ export default function Avatar({ url, imageUrl, alt, size = 36, className }: Pro
           unoptimized
         />
       ) : (
-        // Fallback “incognito”/usuario cuando no hay foto
+        // Fallback "incognito"/usuario cuando no hay foto
         <div className="grid h-full w-full place-items-center">
           <User className="h-1/2 w-1/2 opacity-70" />
         </div>
