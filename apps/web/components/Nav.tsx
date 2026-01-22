@@ -28,7 +28,8 @@ type IconName =
   | "profile"
   | "settings"
   | "logout"
-  | "menu";
+  | "menu"
+  | "close"; // ← AGREGADO
 
 type NavItem = {
   label: string;
@@ -338,7 +339,7 @@ export default function Nav() {
               <Avatar
                 imageUrl={me?.user?.avatarUrl || null}
                 alt={me?.user?.username || "Usuario"}
-                size="md"
+                size={36}
               />
               {!collapsed && (
                 <div className="min-w-0">
@@ -477,7 +478,7 @@ export default function Nav() {
             <div className="mt-4 px-3">
               <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
                 <div className="flex items-center gap-3">
-                  <Avatar imageUrl={me?.user?.avatarUrl || null} username={me?.user?.username || "Invitado"} size="md" />
+                  <Avatar imageUrl={me?.user?.avatarUrl || null} alt={me?.user?.username || "Invitado"} size={40} />
                   <div className="min-w-0">
                     <div className="truncate text-sm font-semibold text-white">
                       {loading ? "Cargando…" : authed ? me?.user?.displayName || me?.user?.username : "Invitado"}
@@ -575,7 +576,7 @@ export default function Nav() {
 
           {authed ? (
             <Link href={profileHref} className="mx-auto relative rounded-xl p-2" aria-label="Perfil">
-              <Avatar imageUrl={me?.user?.avatarUrl || null} username={me?.user?.username || "Perfil"} size="sm" />
+              <Avatar imageUrl={me?.user?.avatarUrl || null} alt={me?.user?.username || "Perfil"} size={28} />
             </Link>
           ) : (
             <button
